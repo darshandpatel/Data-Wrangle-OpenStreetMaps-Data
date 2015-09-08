@@ -3,6 +3,10 @@
 import pprint
 import re
 import xml.etree.cElementTree as ET
+import time
+import info
+import codecs
+import json
 """
 This code Wrangles the boston openstreetmap data and transforms the shape of the data into
 the JSON and adds into the mongodb collection.
@@ -150,26 +154,34 @@ def shape_element(element):
         return node
 
 def process_map(file_in, pretty = False):
+
     #file_out = "{0}.json".format(file_in)
 
-    from pymongo import MongoClient
-    client = MongoClient('localhost:27017')
+
+    client = info.getMongoClient("localhost:27017")
     db = client.openstreetmap
-    #db.boston.drop()
+    db.boston.drop()
+
+
     #with codecs.open(file_out, "w") as fo:
 
-    # Read the source XML file tag by tag.
-    for _, element in ET.iterparse(file_in, events=("start",)):
+    context = iter(ET.iterparse(file_in, events=('start', 'end')))
+    _, root = next(context) # get root element
+    for event, element in context:
+        if event == 'end':
+            el = shape_element(element)
+            if el:
+                db.boston.insert(el)
+                '''
+                if pretty:
+                    fo.write(json.dumps(el, indent=2)+"\n")
+                else:
+                    fo.write(json.dumps(el) + "\n")
+                '''
+            root.clear() # preserve memory
 
-        el = shape_element(element)
-        if el:
-            db.new.insert(el)
-            '''
-            if pretty:
-                fo.write(json.dumps(el, indent=2)+"\n")
-            else:
-                fo.write(json.dumps(el) + "\n")
-            '''
 
 if __name__ == "__main__":
-    process_map('/Users/Darshan/Documents/Data-Wrangle-OpenStreetMaps-Data/data/boston_massachusetts.osm', True)
+    start_time = time.time()
+    process_map('/Users/Darshan/Documents/Data-Wrangle-OpenStreetMaps-Data/data/boston_massachusetts.osm', False)
+    print("--- %s seconds ---" % (time.time() - start_time))
