@@ -1,6 +1,7 @@
-1. Problems Encountered in the Map
+##OpenStreetMap Sample Project - DataWrangling with MongoDB
 
-Boston : 
+####Map area	: Boston
+####Source		: https://mapzen.com/data/metro-extracts
 
 Being a historical city it's obvious to find roads which are not properly planned and I
 think that's why we Bostonian are crazy when it comes to Driving. To add into, most of
@@ -9,9 +10,11 @@ the street in boston has zigzag property.
 Leaving all those characteristics apart, Boston street map data was really great source to 
 analyze as there are bunch of different street in the city.
 
+###1. Problems Encountered in the Map
+
 After exploring the Boston OpenStreetMap data, I found three potential flows in the dataset.
 
-1)
+1.
 
 is a historical city. As far as I know when History word comes
 in any discussion there would be a debate about the historical information.
