@@ -39,7 +39,8 @@ JSON Example :
 
 # Regular Expression
 problem_chars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
-address_start_chars = re.compile(r'^addr:')
+addr_start_chars = re.compile(r'^addr:')
+address_expr = re.compile(r'^address$')
 address_street_chars = re.compile(r'^addr:street')
 tag_property = re.compile(r'^.*:.*')
 
@@ -112,7 +113,27 @@ def shape_element(element):
                 if problem_chars.match(k_value):
                     #print 'Problematic'
                     continue
-                elif address_start_chars.match(k_value):
+                elif address_expr.match(k_value):
+                    #23 Leonard Street, Boston MA 02122 -> split into [(23 Leonard Street),(Boston MA 02122)]
+                    address_parts = v_value.split(',')
+                    if len(address_parts) == 2:
+
+                        street = address_parts[0].strip().split(' ')
+                        if len(street) >= 2:
+                            if street[0].isdigit():
+                                address["housenumber"] = street[0]
+                                address["street"] = ' '.join(street[1:])
+                        elif len(street) == 1:
+                            address["street"] = street
+
+                        second_part = address_parts[1].strip().split(' ')
+                        if len(second_part) == 3:
+                            address["city"],address["state"],address["postcode"] = second_part
+                        else:
+                            print "Bad second address part :{0}".format(second_part)
+                    else:
+                        print "Bad address :{0}".format(v_value)
+                elif addr_start_chars.match(k_value):
 
                     if re.match(r'^.*:.*:.*',k_value):
                         #print '{0} {1}'.format("Check this one",k_value)
@@ -123,9 +144,10 @@ def shape_element(element):
                     else:
                         property = k_value.split(":")
                         address[property[1]] = v_value
-                elif tag_property.match(k_value):
-                    address[k_value] = v_value
-                elif element.tag == "relation":
+                #elif tag_property.match(k_value):
+                #    address[k_value] = v_value
+                #elif element.tag == "relation":
+                else:
                     node[k_value] = v_value
 
             elif sub_tag.tag == 'nd':
@@ -159,8 +181,8 @@ def process_map(file_in, pretty = False):
 
 
     client = info.getMongoClient("localhost:27017")
-    db = client.openstreetmap
-    db.boston.drop()
+    db = client.example
+    db.test.drop()
 
 
     #with codecs.open(file_out, "w") as fo:
@@ -171,7 +193,7 @@ def process_map(file_in, pretty = False):
         if event == 'end':
             el = shape_element(element)
             if el:
-                db.boston.insert(el)
+                db.test.insert(el)
                 '''
                 if pretty:
                     fo.write(json.dumps(el, indent=2)+"\n")
@@ -183,5 +205,5 @@ def process_map(file_in, pretty = False):
 
 if __name__ == "__main__":
     start_time = time.time()
-    process_map('/Users/Darshan/Documents/Data-Wrangle-OpenStreetMaps-Data/data/boston_massachusetts.osm', False)
+    process_map('/Users/Darshan/Documents/Data-Wrangle-OpenStreetMaps-Data/data/example.osm', False)
     print("--- %s seconds ---" % (time.time() - start_time))
